@@ -7,16 +7,43 @@ app.use(cors());
 
 app.get("/v1/", async (req, res, next) => {
   try {
-    if (req.query.content == undefined || req.query.content == "") {
+    let content = req.query.content ?? "";
+    let options = {
+      width: req.query.width ?? 100,
+      color: {
+        dark: req.query.dark ?? "000",
+        light: req.query.light ?? "fff",
+      },
+    };
+
+    if (content == "") {
       res
         .status("400")
         .send("Request requires content use /v1/?content=your text here");
       return;
     }
 
-    console.log(`Generating qr code for ${req.query.content}`);
-    QRCode.toDataURL(req.query.content, function (err, url) {
-      res.send(`<img src="${url}" width=200 height=200/>`);
+    if (options.width < 10 || options.width > 1000) {
+      res
+        .status("400")
+        .send("Width needs to be between 10 and 1000, just as number");
+      return;
+    }
+
+    if (options.dark == "" || options.light == "") {
+      res
+        .status("400")
+        .send(
+          "dark and light colours must be provided as hex strings e.g. aabbcc"
+        );
+      return;
+    }
+
+    console.log(`Generating qr code for ${content}`);
+    QRCode.toDataURL(content, options, function (err, url) {
+      res.send(
+        `<img src="${url}" width=${options.width} height=${options.width} />`
+      );
     });
   } catch (err) {
     console.error("Failed to return content", err);
@@ -25,5 +52,5 @@ app.get("/v1/", async (req, res, next) => {
 });
 
 app.listen(80, function () {
-  console.log("CORS-enabled web server listening on port 80");
+  console.log("Web server is listening on port 80");
 });
