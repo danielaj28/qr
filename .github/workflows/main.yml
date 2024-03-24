@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches:
+    - master
+  workflow_dispatch:
+ 
+env:
+  OCTOPUS_API_KEY: ${{ secrets.API_KEY  }}
+  OCTOPUS_URL: ${{ secrets.SERVER }}
+  OCTOPUS_SPACE: "Default"
+    
+jobs:
+  build:
+    name: Release and Deploy
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+    
+    - name: Bump version and push tag
+      id: tag_version
+      uses: mathieudutour/github-tag-action@v6.0
+      with:
+        github_token: ${{ secrets.GH_TOKEN }}
+        tag_prefix: ""
+      
+    - name: Create a GitHub release
+      uses: ncipollo/release-action@v1
+      with:
+        tag: ${{ steps.tag_version.outputs.new_tag }}
+        name: Release ${{ steps.tag_version.outputs.new_tag }}
+        body: ${{ steps.tag_version.outputs.changelog }}
+        
+    - name: Create a release in Octopus Deploy 🐙
+      uses: OctopusDeploy/create-release-action@v3
+      with:
+        project: "qr"
+        #deploy_to: "Beta"
+        release_number: ${{ steps.tag_version.outputs.new_tag }}
+        
+    - name: Deploy a release in Octopus Deploy 🐙
+      uses: OctopusDeploy/deploy-release-action@v3
+      with:
+        project: 'qr'
+        release_number: ${{ steps.tag_version.outputs.new_tag }}
+        environments: |
+          Beta
