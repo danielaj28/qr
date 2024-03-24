@@ -5,6 +5,10 @@ var app = express();
 
 app.use(cors());
 
+app.get("/", async (req, res, next) => {
+  res.sendFile("/src/index.html", { root: __dirname });
+});
+
 app.get("/v1/", async (req, res, next) => {
   try {
     let content = req.query.content ?? "";
@@ -15,6 +19,7 @@ app.get("/v1/", async (req, res, next) => {
         light: req.query.light ?? "fff",
       },
     };
+    let type = req.query.type ?? "html";
 
     if (content == "") {
       res
@@ -40,10 +45,22 @@ app.get("/v1/", async (req, res, next) => {
     }
 
     console.log(`Generating qr code for ${content}`);
+
     QRCode.toDataURL(content, options, function (err, url) {
-      res.send(
-        `<img src="${url}" width=${options.width} height=${options.width} />`
-      );
+      switch (type) {
+        case "html":
+          res.send(
+            `<img src="${url}" width=${options.width} height=${options.width} />`
+          );
+          return;
+        case "png":
+          res.send(url);
+          return;
+
+        default:
+          res.status("400").send("The type can only be html,png,svg");
+          return;
+      }
     });
   } catch (err) {
     console.error("Failed to return content", err);
