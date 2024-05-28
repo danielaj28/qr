@@ -21,7 +21,3 @@ docker run -p 80:80 qr
 ## Usage
 
 See index.html in src for examples.
-
-## License
-
-[MIT](https://choosealicense.com/licenses/mit/)
