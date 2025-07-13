@@ -30,6 +30,7 @@
                 name="content"
                 placeholder="Enter text or URL"
                 required
+                autofocus
               />
             </div>
             <div class="mb-3">
@@ -140,7 +141,7 @@
       }
       // Debounce logic
       let debounceTimer;
-      document.getElementById("qrForm").addEventListener("input", function() {
+      document.getElementById("qrForm").addEventListener("input", function () {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(updateQR, 500);
       });
