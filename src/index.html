@@ -17,64 +17,148 @@
   </head>
   <body>
     <div class="container-fluid">
-      <div class="row">
-        <div class="col-md"></div>
-        <div class="col-md">
-          <h1>QR Code Generator</h1>
-          <p>A simple QR code generator service accessible via GET request.</p>
-          <h2>Generating an img element</h2>
-          <a href="/v1/?content=Your content here"
-            >/v1/?content=Your content here</a
-          >
-          <h2>Options</h2>
-          <table class="table table-striped">
-            <thead>
-              <th>Name</th>
-              <th>Description</th>
-            </thead>
-            <tbody>
-              <tr>
-                <td>content</td>
-                <td>
-                  What the qr code will return when scanned, ensure the content
-                  is url encoded
-                </td>
-              </tr>
-              <tr>
-                <td>width</td>
-                <td>
-                  Number of pixels width the resulting image should be (min:10,
-                  max:1000, default:100)
-                </td>
-              </tr>
-              <tr>
-                <td>dark</td>
-                <td>The hex code for the dark color (default: 000)</td>
-              </tr>
-              <tr>
-                <td>light</td>
-                <td>The hex code for the dark color (default: fff)</td>
-              </tr>
-              <tr>
-                <td>type</td>
-                <td>
-                  The output type (default: html)
-                  <ul>
-                    <li>html: An img element</li>
-                    <li>png: A data png base64 encoded image</li>
-                  </ul>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <!-- <h2>Examples</h2>
-          <code>
-            
-          </code> -->
+      <div class="row justify-content-center">
+        <div class="col-lg-5 col-md-6 mb-4">
+          <h1 class="mb-4">QR Code Builder</h1>
+          <form id="qrForm" class="card p-4 shadow mb-4">
+            <div class="mb-3">
+              <label for="content" class="form-label">Content</label>
+              <input
+                type="text"
+                class="form-control"
+                id="content"
+                name="content"
+                placeholder="Enter text or URL"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label for="width" class="form-label">Width (10-1000 px)</label>
+              <input
+                type="number"
+                class="form-control"
+                id="width"
+                name="width"
+                min="10"
+                max="1000"
+                value="250"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="dark" class="form-label">Dark Color</label>
+              <input
+                type="color"
+                class="form-control form-control-color"
+                id="dark"
+                name="dark"
+                value="#000000"
+                title="Choose dark color"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="light" class="form-label">Light Color</label>
+              <input
+                type="color"
+                class="form-control form-control-color"
+                id="light"
+                name="light"
+                value="#ffffff"
+                title="Choose light color"
+              />
+            </div>
+          </form>
         </div>
-        <div class="col-md"></div>
+        <div class="col-lg-5 col-md-6 mb-4 d-flex align-items-stretch">
+          <div class="card p-4 shadow text-center w-100">
+            <h5 class="mb-3">Live QR Code Preview</h5>
+            <div id="qrPreview">
+              <img
+                id="qrImg"
+                src=""
+                alt="QR Code"
+                style="max-width: 100%; height: auto; display: none"
+              />
+              <div id="qrPlaceholder" class="text-muted">
+                Enter content to generate QR code.
+              </div>
+              <button
+                id="downloadBtn"
+                class="btn btn-primary mt-3"
+                style="display: none"
+                type="button"
+              >
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-      <!-- Content here -->
     </div>
+    <script>
+      function hexFromColorPicker(val) {
+        return val.replace("#", "");
+      }
+      function buildUrl() {
+        const content = encodeURIComponent(
+          document.getElementById("content").value
+        );
+        const width = document.getElementById("width").value;
+        const dark = hexFromColorPicker(document.getElementById("dark").value);
+        const light = hexFromColorPicker(
+          document.getElementById("light").value
+        );
+        if (!content) return null;
+        return `/v1/?content=${content}&width=${width}&dark=${dark}&light=${light}&type=html`;
+      }
+      function updateQR() {
+        const url = buildUrl();
+        const img = document.getElementById("qrImg");
+        const placeholder = document.getElementById("qrPlaceholder");
+        const downloadBtn = document.getElementById("downloadBtn");
+        if (!url) {
+          img.style.display = "none";
+          placeholder.style.display = "block";
+          downloadBtn.style.display = "none";
+          return;
+        }
+        fetch(url)
+          .then((res) => res.text())
+          .then((html) => {
+            // Extract src from returned img html
+            const match = html.match(/src=\"([^\"]+)\"/);
+            if (match) {
+              img.src = match[1];
+              img.style.display = "block";
+              placeholder.style.display = "none";
+              downloadBtn.style.display = "inline-block";
+            } else {
+              img.style.display = "none";
+              placeholder.style.display = "block";
+              downloadBtn.style.display = "none";
+            }
+          });
+      }
+      // Debounce logic
+      let debounceTimer;
+      document.getElementById("qrForm").addEventListener("input", function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(updateQR, 500);
+      });
+      document
+        .getElementById("downloadBtn")
+        .addEventListener("click", function () {
+          const img = document.getElementById("qrImg");
+          if (img.src) {
+            const a = document.createElement("a");
+            a.href = img.src;
+            a.download = "qr-code.png";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          }
+        });
+      // Initial preview
+      updateQR();
+    </script>
   </body>
 </html>
