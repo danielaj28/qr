@@ -9,6 +9,10 @@ app.get("/", async (req, res, next) => {
   res.sendFile("/src/index.html", { root: __dirname });
 });
 
+app.get("/health/", async function (req, res, next) {
+  return res.status(200).send("ok");
+});
+
 app.get("/v1/", async (req, res, next) => {
   try {
     let content = req.query.content ?? "";
